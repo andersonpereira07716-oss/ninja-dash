@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ninja Dash</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #121c24;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 { color: #ff5722; margin-bottom: 5px; }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            max-width: 300px;
+        }
+        button {
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+        }
+        #btn-jogar { background-color: #e64a19; }
+        #btn-personagens { background-color: #0288d1; }
+        #btn-loja { background-color: #0288d1; }
+        #jogo-container {
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="menu-principal" class="menu">
+        <h1>NINJA DASH</h1>
+        <p>Melhor Pontuação: <span id="pontos">0</span></p>
+        <button id="btn-jogar">JOGAR</button>
+        <button id="btn-personagens">PERSONAGENS</button>
+        <button id="btn-loja">LOJA</button>
+    </div>
+
+    <div id="jogo-container">
+        <h2>O Jogo está a correr!</h2>
+        <button onclick="voltarMenu()" style="background-color: #d32f2f;">VOLTAR</button>
+    </div>
+
+    <script>
+        const btnJogar = document.getElementById('btn-jogar');
+        const menuPrincipal = document.getElementById('menu-principal');
+        const jogoContainer = document.getElementById('jogo-container');
+
+        btnJogar.addEventListener('click', () => {
+            menuPrincipal.style.display = 'none';
+            jogoContainer.style.display = 'block';
+        });
+
+        function voltarMenu() {
+            jogoContainer.style.display = 'none';
+            menuPrincipal.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
