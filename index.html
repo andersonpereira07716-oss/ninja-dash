@@ -2,9 +2,14 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ninja Dash</title>
     <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
             margin: 0;
             background-color: #121c24;
@@ -15,62 +20,215 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
         }
-        h1 { color: #ff5722; margin-bottom: 5px; }
+        h1 { 
+            color: #ff5722; 
+            margin-bottom: 5px; 
+            font-size: 2.2rem;
+            text-align: center;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+        }
+        p {
+            font-size: 1.1rem;
+            color: #b0bec5;
+            margin-bottom: 25px;
+        }
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #121c24;
+            padding: 20px;
+            z-index: 10;
+        }
+        .screen.active {
+            display: flex;
+        }
         .menu {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            width: 80%;
-            max-width: 300px;
+            width: 85%;
+            max-width: 320px;
         }
         button {
-            padding: 15px;
+            padding: 16px;
             font-size: 18px;
             font-weight: bold;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
             cursor: pointer;
+            pointer-events: auto;
+            touch-action: manipulation;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease, background-color 0.2s;
+        }
+        button:active {
+            transform: scale(0.96);
         }
         #btn-jogar { background-color: #e64a19; }
         #btn-personagens { background-color: #0288d1; }
-        #btn-loja { background-color: #0288d1; }
-        #jogo-container {
-            display: none;
+        #btn-loja { background-color: #00897b; }
+        .btn-voltar { background-color: #d32f2f; margin-top: 20px; width: 85%; max-width: 320px; }
+        
+        /* Estilos das Telas Secundárias */
+        .grid-itens {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            width: 85%;
+            max-width: 320px;
+            margin-bottom: 15px;
+        }
+        .card-item {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
             text-align: center;
+            font-size: 1rem;
+        }
+        
+        /* Canvas do Jogo */
+        #game-canvas {
+            background: #1e293b;
+            border: 2px solid #ff5722;
+            border-radius: 8px;
+            max-width: 100%;
+            touch-action: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="menu-principal" class="menu">
+    <!-- MENU PRINCIPAL -->
+    <div id="menu-screen" class="screen active">
         <h1>NINJA DASH</h1>
-        <p>Melhor Pontuação: <span id="pontos">0</span></p>
-        <button id="btn-jogar">JOGAR</button>
-        <button id="btn-personagens">PERSONAGENS</button>
-        <button id="btn-loja">LOJA</button>
+        <p>Melhor Pontuação: <span id="melhor-pontos">0</span></p>
+        <div class="menu">
+            <button id="btn-jogar">JOGAR</button>
+            <button id="btn-personagens">PERSONAGENS</button>
+            <button id="btn-loja">LOJA</button>
+        </div>
     </div>
 
-    <div id="jogo-container">
-        <h2>O Jogo está a correr!</h2>
-        <button onclick="voltarMenu()" style="background-color: #d32f2f;">VOLTAR</button>
+    <!-- TELA DE JOGO -->
+    <div id="jogo-screen" class="screen">
+        <h2 style="color: #ff5722; margin-top: 0;">JOGO EM ANDAMENTO</h2>
+        <p>Pontos Atuais: <span id="pontos-atuais">0</span></p>
+        <canvas id="game-canvas" width="300" height="400"></canvas>
+        <button class="btn-voltar" onclick="mudarTela('menu-screen')">VOLTAR AO MENU</button>
+    </div>
+
+    <!-- TELA DE PERSONAGENS -->
+    <div id="personagens-screen" class="screen">
+        <h2 style="color: #0288d1;">PERSONAGENS</h2>
+        <div class="grid-itens">
+            <div class="card-item">忍者 Ninja Clássico (Ativo)</div>
+            <div class="card-item" style="opacity: 0.6;">⚡ Ninja Sombra (Bloqueado)</div>
+        </div>
+        <button class="btn-voltar" onclick="mudarTela('menu-screen')">VOLTAR</button>
+    </div>
+
+    <!-- TELA DE LOJA -->
+    <div id="loja-screen" class="screen">
+        <h2 style="color: #00897b;">LOJA</h2>
+        <div class="grid-itens">
+            <div class="card-item">🪙 Moedas: <span id="qtd-moedas">100</span></div>
+            <div class="card-item">Pocão de Velocidade (50 Moedas)</div>
+        </div>
+        <button class="btn-voltar" onclick="mudarTela('menu-screen')">VOLTAR</button>
     </div>
 
     <script>
-        const btnJogar = document.getElementById('btn-jogar');
-        const menuPrincipal = document.getElementById('menu-principal');
-        const jogoContainer = document.getElementById('jogo-container');
+        console.log("Ninja Dash inicializado com sucesso.");
 
-        btnJogar.addEventListener('click', () => {
-            menuPrincipal.style.display = 'none';
-            jogoContainer.style.display = 'block';
-        });
-
-        function voltarMenu() {
-            jogoContainer.style.display = 'none';
-            menuPrincipal.style.display = 'flex';
+        // Gerenciamento seguro do localStorage para Melhor Pontuação e Moedas
+        function carregarDados() {
+            try {
+                const melhor = localStorage.getItem('ninja_dash_recorde') || 0;
+                const moedas = localStorage.getItem('ninja_dash_moedas') || 100;
+                document.getElementById('melhor-pontos').innerText = melhor;
+                document.getElementById('qtd-moedas').innerText = moedas;
+            } catch (e) {
+                console.error("Erro ao ler localStorage:", e);
+            }
         }
+
+        // Função universal de navegação entre telas
+        function mudarTela(idTelaAlvo) {
+            console.log("Mudando para a tela:", idTelaAlvo);
+            document.querySelectorAll('.screen').forEach(s => {
+                s.classList.remove('active');
+            });
+            document.getElementById(idTelaAlvo).classList.add('active');
+
+            if (idTelaAlvo === 'jogo-screen') {
+                iniciarLoopJogo();
+            } else {
+                pararLoopJogo();
+            }
+        }
+
+        // Listeners seguros com suporte a toque mobile e clique
+        document.getElementById('btn-jogar').addEventListener('click', () => mudarTela('jogo-screen'));
+        document.getElementById('btn-personagens').addEventListener('click', () => mudarTela('personagens-screen'));
+        document.getElementById('btn-loja').addEventListener('click', () => mudarTela('loja-screen'));
+
+        // Lógica básica e funcional do loop do jogo para teste de gameplay
+        let intervalJogo = null;
+        function iniciarLoopJogo() {
+            let pontos = 0;
+            document.getElementById('pontos-atuais').innerText = pontos;
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (intervalJogo) clearInterval(intervalJogo);
+
+            intervalJogo = setInterval(() => {
+                pontos += 1;
+                document.getElementById('pontos-atuais').innerText = pontos;
+
+                // Desenho simples no canvas para garantir renderização visual ativa
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Desenhar o ninja (quadrado laranja)
+                ctx.fillStyle = '#ff5722';
+                ctx.fillRect(50, 280, 30, 40);
+
+                // Obstáculo em movimento simulado
+                ctx.fillStyle = '#e11d48';
+                ctx.fillRect(200, 290, 20, 30);
+
+                try {
+                    const atualRec = parseInt(localStorage.getItem('ninja_dash_recorde') || 0);
+                    if (pontos > atualRec) {
+                        localStorage.setItem('ninja_dash_recorde', pontos);
+                        document.getElementById('melhor-pontos').innerText = pontos;
+                    }
+                } catch(e) {}
+            }, 100);
+        }
+
+        function pararLoopJogo() {
+            if (intervalJogo) {
+                clearInterval(intervalJogo);
+                intervalJogo = null;
+            }
+        }
+
+        // Inicialização de dados ao carregar a página
+        window.addEventListener('DOMContentLoaded', carregarDados);
     </script>
 </body>
 </html>
